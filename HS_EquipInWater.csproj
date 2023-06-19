@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <AssemblyName>HS_EquipInWater</AssemblyName>
+    <Description>HS_EquipmentWaterFix</Description>
+    <Version>1.0.0</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.1.0" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\Valheim\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="assembly_guiutils">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_guiutils.dll</HintPath>
+    </Reference>
+    <Reference Include="assembly_postprocessing">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_postprocessing.dll</HintPath>
+    </Reference>
+    <Reference Include="assembly_sunshafts">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_sunshafts.dll</HintPath>
+    </Reference>
+    <Reference Include="assembly_utils">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_utils.dll</HintPath>
+    </Reference>
+    <Reference Include="assembly_valheim">
+      <HintPath>..\..\Tools\AssemblyPublicizer\publicized_assemblies\assembly_valheim.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>..\..\Valheim\BepInEx\core\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="ServerSync">
+      <HintPath>Libs\ServerSync.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\Valheim\unstripped_corlib\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\Tools\AssemblyPublicizer\publicized_assemblies\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\..\Valheim\unstripped_corlib\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Libs\ServerSync.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y" />
+  </Target>
+</Project>
