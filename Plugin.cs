@@ -2,9 +2,10 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using System.Collections.Generic;
-using BepInEx.Logging;
 using System.Linq;
-using OpCodes = System.Reflection.Emit.OpCodes;
+using ServerSync;
+using System;
+using System.Reflection.Emit;
 
 namespace HS_EquipInWater
 {
@@ -12,43 +13,48 @@ namespace HS_EquipInWater
     public class HS_EquipInWater : BaseUnityPlugin
     {
         private const string ModName = "HS_EquipInWater";
-        private const string ModVersion = "1.0.2";
+        private const string ModVersion = "1.0.4";
         private const string ModGUID = "hs_equipinwater";
 
-        private List<ConfigEntry<bool>> configEntries = new();
-        private static List<string> deniedItems = new();
-        private Items itemList = new();
+        private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "1.0.4" };
 
-        void Awake()
+        private static ConfigEntry<Toggle> serverConfigLocked = null!;
+        private static ConfigEntry<bool> modEnabled = null!;
+        private static ConfigEntry<string> itemBlacklist = null!;
+        private static List<string> itemBlacklistStrings = new ();
+
+        #region Config Boilerplate
+        private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description, bool synchronizedSetting = true)
         {
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowAxes", true, "Allow axes to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowBows", true, "Allow bows to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowAtgeirs", true, "Allow atgeirs to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowKnives", true, "Allow knives to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowMaces", true, "Allow maces to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowShields", true, "Allow shields to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowSledge", true, "Allow sledge to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowSpears", true, "Allow spears to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowSwords", true, "Allow swords to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowClub", true, "Allow club to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowTorch", false, "Allow torch to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowPickaxes", true, "Allow pickaxes to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowCultivator", true, "Allow cultivator to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowFishingRod", true, "Allow fishing rod to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowHammer", true, "Allow hammer to be used in Water"));
-            configEntries.Add(Config.Bind("ItemsToAllow", "allowHoe", true, "Allow hoe to be used in Water"));
+            ConfigEntry<T> configEntry = Config.Bind(group, name, value, description);
+            SyncedConfigEntry<T> syncedConfigEntry = configSync.AddConfigEntry(configEntry);
+            syncedConfigEntry.SynchronizedConfig = synchronizedSetting;
+            return configEntry;
+        }
 
-            foreach (ConfigEntry<bool> confEntry in configEntries)
-            {
-                if (!confEntry.Value)
-                {
-                    List<string> stringList = itemList.GetType().GetField(confEntry.Definition.Key).GetValue(itemList) as List<string>;
-                    foreach (string a in stringList)
-                    {
-                        deniedItems.Add(a);
-                    }
-                }
-            }
+        private ConfigEntry<T> config<T>(string group, string name, T value, string description, bool synchronizedSetting = true)
+        {
+            return config(group, name, value, new ConfigDescription(description), synchronizedSetting);
+        }
+
+        private enum Toggle
+        {
+            On = 1,
+            Off = 0
+        }
+
+        #endregion
+
+        private void Awake()
+        {
+            serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On, "If on, the configuration is locked and can be changed by server admins only.");
+            configSync.AddLockingConfigEntry(serverConfigLocked);
+            modEnabled = config("1 - General", "Mod Enabled", true, "");
+
+            itemBlacklist = config("2 - Blacklist Items", "Items Blacklisted in Water", "Torch;Lantern;", new ConfigDescription("List of Prefab names to Blacklist from the Player being able to use while Swimming"));
+            itemBlacklist.SettingChanged += (_, _) => itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
             Harmony harmony = new Harmony(ModGUID);
 
             harmony.Patch(
@@ -65,28 +71,32 @@ namespace HS_EquipInWater
                 AccessTools.Method(typeof(Humanoid), "UpdateEquipment"),
                 transpiler: new HarmonyMethod(typeof(HS_EquipInWaterPatches), nameof(HS_EquipInWaterPatches.HS_PatchFixedUpdatedWaterCheck))
             );
+            Config.SaveOnConfigSet = true;
+            Config.Save();
         }
 
-        // Return True to Put away Equipment
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
         {
+            if (!modEnabled.Value)
+                return true;
+
             if (item == null)
             {
                 var player = Player.m_localPlayer;
-                if (player.m_leftItem != null && deniedItems.Contains(player.m_leftItem.m_shared.m_name))
+                if (player.m_leftItem != null && itemBlacklistStrings.Contains(player.m_leftItem.m_dropPrefab.name))
                     return true;
 
-                if (player.m_rightItem != null && deniedItems.Contains(player.m_rightItem.m_shared.m_name))
+                if (player.m_rightItem != null && itemBlacklistStrings.Contains(player.m_rightItem.m_dropPrefab.name))
                     return true;
 
                 return false;
             }
-            return deniedItems.Contains(item.m_shared.m_name);
+
+            return itemBlacklistStrings.Contains(item.m_shared.m_name);
         }
 
         public static class HS_EquipInWaterPatches
         {
-            // Remove (Is in Water) check for when Player uses Hide Key
             public static IEnumerable<CodeInstruction> HS_PatchPlayerUpdateWaterCheck(IEnumerable<CodeInstruction> instructions)
             {
                 List<CodeInstruction> instructionList = instructions.ToList();
@@ -100,8 +110,6 @@ namespace HS_EquipInWater
                 return instructionList;
             }
 
-
-            // Inject a Call to our custom function "HS_CheckWaterItem" within the If block to check if Item is Permissible to be used in water.
             public static IEnumerable<CodeInstruction> HS_InjectWaterItemCheck(IEnumerable<CodeInstruction> instructions)
             {
                 var instructionList = new List<CodeInstruction>(instructions);
@@ -109,23 +117,21 @@ namespace HS_EquipInWater
                 {
                     new (OpCodes.Ldarg_1),
                     new (OpCodes.Call, typeof(HS_EquipInWater).GetMethod("HS_CheckWaterItem")),
-                    new (OpCodes.Brfalse_S, instructionList[29].operand) // Reuse Label from Instruction 29 for JMP
+                    new (OpCodes.Brfalse_S, instructionList[29].operand)
                 };
 
                 instructionList.InsertRange(33, injectionInstructions);
                 return instructionList;
             }
 
-            // Inject a Call to our custom function "HS_CheckWaterItem" within the If block to check if Item is Permissible to be used in water.
             public static IEnumerable<CodeInstruction> HS_PatchFixedUpdatedWaterCheck(IEnumerable<CodeInstruction> instructions)
             {
-
                 var instructionList = new List<CodeInstruction>(instructions);
                 var injectionInstructions = new List<CodeInstruction>
                 {
                     new (OpCodes.Ldnull),
                     new (OpCodes.Call, typeof(HS_EquipInWater).GetMethod("HS_CheckWaterItem")),
-                    new (OpCodes.Brfalse_S, instructionList[9].operand) // Reuse Label from Instruction 9 for JMP
+                    new (OpCodes.Brfalse_S, instructionList[9].operand)
                 };
 
                 instructionList.InsertRange(10, injectionInstructions);

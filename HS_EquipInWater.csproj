@@ -1,13 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <AssemblyName>HS_EquipInWater</AssemblyName>
     <Description>HS_EquipmentWaterFix</Description>
-    <Version>1.0.0</Version>
+    <Version>0.1.4</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <Company>HS</Company>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HSValhiem/HS_EquipInWater</RepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Libs\ServerSync.dll" />
+    <None Remove="ServerSync.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Libs\ServerSync.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
@@ -60,14 +74,8 @@
       <HintPath>..\..\Valheim\valheim_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="Libs\ServerSync.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y" />
-  </Target>
+	<Target Name="MyCustomBuildTask" AfterTargets="ILRepacker">
+		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y " />
+		<Exec Condition="'$(Configuration)' == 'Release'" Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y " />
+	</Target>
 </Project>
