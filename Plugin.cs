@@ -12,7 +12,7 @@ namespace HS_EquipInWater
     public class HS_EquipInWater : BaseUnityPlugin
     {
         private const string ModName = "HS_EquipInWater";
-        private const string ModVersion = "1.0.0";
+        private const string ModVersion = "1.0.1";
         private const string ModGUID = "hs_equipinwater";
 
         public static readonly ManualLogSource MlLogger = BepInEx.Logging.Logger.CreateLogSource(ModGUID);
@@ -92,9 +92,20 @@ namespace HS_EquipInWater
 
         //}
 
+        // Return True to Put away Equipment
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
         {
-            
+            if (item == null)
+            {
+                var player = Player.m_localPlayer;
+                if (player.m_leftItem != null && deniedItems.Contains(player.m_leftItem.m_shared.m_name))
+                    return true;
+
+                if (player.m_rightItem != null && deniedItems.Contains(player.m_rightItem.m_shared.m_name))
+                    return true;
+
+                return false;
+            }
             return deniedItems.Contains(item.m_shared.m_name);
         }
 
@@ -133,14 +144,16 @@ namespace HS_EquipInWater
             // Remove (Is in Water) check during Humanoid Fixed Update
             public static IEnumerable<CodeInstruction> HS_PatchFixedUpdatedWaterCheck(IEnumerable<CodeInstruction> instructions)
             {
-                List<CodeInstruction> instructionList = instructions.ToList();
 
-                for (int i = 4; i <= 11; i++)
+                var instructionList = new List<CodeInstruction>(instructions);
+                var injectionInstructions = new List<CodeInstruction>
                 {
-                    CodeInstruction instruction = instructionList[i];
-                    instruction.opcode = OpCodes.Nop;
-                }
+                    new (OpCodes.Ldnull),
+                    new (OpCodes.Call, typeof(HS_EquipInWater).GetMethod("HS_CheckWaterItem")),
+                    new (OpCodes.Brfalse_S, instructionList[9].operand) // Reuse Label from Instruction 9 for JMP
+                };
 
+                instructionList.InsertRange(10, injectionInstructions);
                 return instructionList;
             }
         }
