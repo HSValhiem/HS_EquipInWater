@@ -12,10 +12,9 @@ namespace HS_EquipInWater
     public class HS_EquipInWater : BaseUnityPlugin
     {
         private const string ModName = "HS_EquipInWater";
-        private const string ModVersion = "1.0.1";
+        private const string ModVersion = "1.0.2";
         private const string ModGUID = "hs_equipinwater";
 
-        public static readonly ManualLogSource MlLogger = BepInEx.Logging.Logger.CreateLogSource(ModGUID);
         private List<ConfigEntry<bool>> configEntries = new();
         private static List<string> deniedItems = new();
         private Items itemList = new();
@@ -66,31 +65,7 @@ namespace HS_EquipInWater
                 AccessTools.Method(typeof(Humanoid), "UpdateEquipment"),
                 transpiler: new HarmonyMethod(typeof(HS_EquipInWaterPatches), nameof(HS_EquipInWaterPatches.HS_PatchFixedUpdatedWaterCheck))
             );
-
-            // Example of How to Patch Protected Methods for LVH-IT, in case they ever read this.
-            // harmony.Patch(AccessTools.Method(typeof(Humanoid), "HideHandItems"), prefix: new HarmonyMethod(typeof(HS_EquipmentWaterFix), nameof(PatchHideHandItems)));
         }
-
-        // Example of How to Patch Protected Methods for LVH-IT, in case they ever read this.
-        //private static void PatchHideHandItems(Humanoid __instance, ref bool __runOriginal)
-        //{
-        //    __runOriginal = false;
-
-        //    if (__instance.m_leftItem == null && __instance.m_rightItem == null)
-        //    {
-        //        return;
-        //    }
-
-        //    ItemDrop.ItemData leftItem = __instance.m_leftItem;
-        //    ItemDrop.ItemData rightItem = __instance.m_rightItem;
-        //    __instance.UnequipItem(__instance.m_leftItem, true);
-        //    __instance.UnequipItem(__instance.m_rightItem, true);
-        //    __instance.m_hiddenLeftItem = leftItem;
-        //    __instance.m_hiddenRightItem = rightItem;
-        //    __instance.SetupVisEquipment(__instance.m_visEquipment, false);
-        //    __instance.m_zanim.SetTrigger("equip_hip");
-
-        //}
 
         // Return True to Put away Equipment
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
@@ -126,7 +101,7 @@ namespace HS_EquipInWater
             }
 
 
-            // Inject a Call to our custom function "HS_CheckWaterItem" within the If block to check if Item is Permissable to be used in water.
+            // Inject a Call to our custom function "HS_CheckWaterItem" within the If block to check if Item is Permissible to be used in water.
             public static IEnumerable<CodeInstruction> HS_InjectWaterItemCheck(IEnumerable<CodeInstruction> instructions)
             {
                 var instructionList = new List<CodeInstruction>(instructions);
@@ -141,7 +116,7 @@ namespace HS_EquipInWater
                 return instructionList;
             }
 
-            // Remove (Is in Water) check during Humanoid Fixed Update
+            // Inject a Call to our custom function "HS_CheckWaterItem" within the If block to check if Item is Permissible to be used in water.
             public static IEnumerable<CodeInstruction> HS_PatchFixedUpdatedWaterCheck(IEnumerable<CodeInstruction> instructions)
             {
 
