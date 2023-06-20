@@ -13,16 +13,19 @@ namespace HS_EquipInWater
     public class HS_EquipInWater : BaseUnityPlugin
     {
         private const string ModName = "HS_EquipInWater";
-        private const string ModVersion = "1.0.4";
+        private const string ModVersion = "0.1.5";
         private const string ModGUID = "hs_equipinwater";
 
-        private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "1.0.4" };
+        private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "0.1.5" };
 
         private static ConfigEntry<Toggle> serverConfigLocked = null!;
         private static ConfigEntry<bool> modEnabled = null!;
+        private static ConfigEntry<FilterMode> filterMode = null!;
         private static ConfigEntry<string> itemBlacklist = null!;
-        private static List<string> itemBlacklistStrings = new ();
+        private static ConfigEntry<string> itemWhitelist = null!;
 
+        private static List<string> itemBlacklistStrings = new ();
+        private static List<string> itemWhitelistStrings = new ();
         #region Config Boilerplate
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description, bool synchronizedSetting = true)
         {
@@ -43,6 +46,12 @@ namespace HS_EquipInWater
             Off = 0
         }
 
+        private enum FilterMode
+        {
+            Blacklist = 0,
+            Whitelist = 1
+        }
+
         #endregion
 
         private void Awake()
@@ -51,9 +60,15 @@ namespace HS_EquipInWater
             configSync.AddLockingConfigEntry(serverConfigLocked);
             modEnabled = config("1 - General", "Mod Enabled", true, "");
 
-            itemBlacklist = config("2 - Blacklist Items", "Items Blacklisted in Water", "Torch;Lantern;", new ConfigDescription("List of Prefab names to Blacklist from the Player being able to use while Swimming"));
+            filterMode = config("2 - Items Filter", "Filter Mode", FilterMode.Blacklist, "Choose the Method of which to Filter Items used in Water");
+            itemBlacklist = config("2 - Items Filter", "Items Blacklisted in Water", "Torch;Lantern;", new ConfigDescription("List of Prefab names to Blacklist from the Player being able to use while Swimming"));
             itemBlacklist.SettingChanged += (_, _) => itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            itemWhitelist = config("2 - Items Filter", "Items Whitelisted in Water", "SpearBronze;", new ConfigDescription("List of Prefab names to Whitelist the Player to e able to use while Swimming"));
+            itemWhitelist.SettingChanged += (_, _) => itemWhitelistStrings = itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            itemWhitelistStrings = itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
 
             Harmony harmony = new Harmony(ModGUID);
 
@@ -73,6 +88,7 @@ namespace HS_EquipInWater
             );
         }
 
+        // Return true to Put away All Equipment when in water
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
         {
             if (!modEnabled.Value)
@@ -81,12 +97,22 @@ namespace HS_EquipInWater
             if (item == null)
             {
                 var player = Player.m_localPlayer;
-                if (player.m_leftItem != null && itemBlacklistStrings.Contains(player.m_leftItem.m_dropPrefab.name))
-                    return true;
+                if (filterMode.Value == FilterMode.Blacklist)
+                {
+                    if (player.m_leftItem != null && itemBlacklistStrings.Contains(player.m_leftItem.m_dropPrefab.name))
+                        player.UnequipItem(player.m_leftItem);
 
-                if (player.m_rightItem != null && itemBlacklistStrings.Contains(player.m_rightItem.m_dropPrefab.name))
-                    return true;
+                    if (player.m_rightItem != null && itemBlacklistStrings.Contains(player.m_rightItem.m_dropPrefab.name))
+                        player.UnequipItem(player.m_rightItem);
+                }
+                else
+                {
+                    if (player.m_leftItem != null && !itemWhitelistStrings.Contains(player.m_leftItem.m_dropPrefab.name))
+                        player.UnequipItem(player.m_leftItem);
 
+                    if (player.m_rightItem != null && !itemWhitelistStrings.Contains(player.m_rightItem.m_dropPrefab.name))
+                        player.UnequipItem(player.m_rightItem);
+                }
                 return false;
             }
 
