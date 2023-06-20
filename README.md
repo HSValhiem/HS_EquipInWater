@@ -29,13 +29,23 @@
 
 # Equip in Water
 It appears that EquipInWater is ready to take the spotlight among mods that enable equipment usage while swimming.
-This mod is based on LVH-IT's "UseEquipmentInWater" mod, utilizing the same configuration schema for seamless migration.
+
+This mod is based on LVH-IT's "UseEquipmentInWater" mod.
+
 Now, let's dive into the exciting details!
+
 The significant change in EquipInWater is its enhanced performance compared to "UseEquipmentInWater." During performance benchmarking, it was discovered that "UseEquipmentInWater" consumed 5.9% of the main loop due to its non-production-ready methods.
+
 In contrast, EquipInWater offers over 50 times better performance while also providing configuration options for water-usable items.
+
+Check the Github for a full Writeup[GitHub](https://github.com/HSValhiem/HS_EquipInWater).
 
 ## Thanks!
 Special thanks to LVH-IT for their exemplary mod, which served as a valuable reference and inspiration for this project. Their dedication in creating and maintaining such a long-standing mod is truly commendable.
+
+Massive Thanks to Smoothbrain for the amazing Libraries and Mods provided to the community!
+
+This mod uses the ServerSync Library from Smoothbrain to enable Server-Client Config Synchronization.
 
 ## Beta Version Notice:
 
