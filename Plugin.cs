@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using System.Collections.Generic;
@@ -49,11 +49,17 @@ namespace HS_EquipInWater
         {
             serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On, "If on, the configuration is locked and can be changed by server admins only.");
             configSync.AddLockingConfigEntry(serverConfigLocked);
-            modEnabled = config("1 - General", "Mod Enabled", true, "");
+            UseBlackList = config("1 - General", "Use Blacklist", true, "");
 
             itemBlacklist = config("2 - Blacklist Items", "Items Blacklisted in Water", "Torch;Lantern;", new ConfigDescription("List of Prefab names to Blacklist from the Player being able to use while Swimming"));
             itemBlacklist.SettingChanged += (_, _) => itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             itemBlacklistStrings = itemBlacklist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            UseWhiteList = config("1 - General", "Use Whitelist", true, "");
+
+            itemWhitelist = config("2 - Whitelist Items", "Items Whitelisted in Water", "Torch;Lantern;", new ConfigDescription("List of prefab names for WhiteList Which the player can use in the water"));
+            itemWhitelist.SettingChanged += (_, _) => itemWhitelistStrings = itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            itemWhitelistStrings = itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             Harmony harmony = new Harmony(ModGUID);
 
@@ -75,7 +81,7 @@ namespace HS_EquipInWater
 
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
         {
-            if (!modEnabled.Value)
+            if (!UseBlackList.Value)
                 return true;
 
             if (item == null)
@@ -91,6 +97,23 @@ namespace HS_EquipInWater
             }
 
             return itemBlacklistStrings.Contains(item.m_shared.m_name);
+
+            if (!UseWhiteList.Value)
+                return true;
+
+            if (item == null)
+            {
+                var player = Player.m_localPlayer;
+                if (player.m_leftItem != null && itemWhitelistStrings.Contains(player.m_leftItem.m_dropPrefab.name))
+                    return true;
+
+                if (player.m_rightItem != null && itemWhitelistStrings.Contains(player.m_rightItem.m_dropPrefab.name))
+                    return true;
+
+                return false;
+            }
+
+            return itemWhitelistStrings.Contains(item.m_shared.m_name);
         }
 
         public static class HS_EquipInWaterPatches
