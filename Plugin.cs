@@ -71,8 +71,6 @@ namespace HS_EquipInWater
                 AccessTools.Method(typeof(Humanoid), "UpdateEquipment"),
                 transpiler: new HarmonyMethod(typeof(HS_EquipInWaterPatches), nameof(HS_EquipInWaterPatches.HS_PatchFixedUpdatedWaterCheck))
             );
-            Config.SaveOnConfigSet = true;
-            Config.Save();
         }
 
         public static bool HS_CheckWaterItem(ItemDrop.ItemData item)
