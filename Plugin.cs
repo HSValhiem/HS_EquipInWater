@@ -13,10 +13,10 @@ namespace HS_EquipInWater
     public class HS_EquipInWater : BaseUnityPlugin
     {
         private const string ModName = "HS_EquipInWater";
-        private const string ModVersion = "0.1.5";
+        private const string ModVersion = "0.1.6";
         private const string ModGUID = "hs_equipinwater";
 
-        private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "0.1.5" };
+        private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "0.1.6" };
 
         private static ConfigEntry<Toggle> serverConfigLocked = null!;
         private static ConfigEntry<bool> modEnabled = null!;
