@@ -116,7 +116,7 @@ namespace HS_EquipInWater
                 return false;
             }
 
-            return filterMode.Value == FilterMode.Blacklist ? itemBlacklistStrings.Contains(item.m_shared.m_name) : !itemWhitelistStrings.Contains(item.m_shared.m_name);
+            return filterMode.Value == FilterMode.Blacklist ? itemBlacklistStrings.Contains(item.m_shared.m_name) : itemWhitelistStrings.Contains(item.m_shared.m_name);
         }
 
         public static class HS_EquipInWaterPatches
