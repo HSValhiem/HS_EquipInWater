@@ -125,7 +125,7 @@ namespace HS_EquipInWater
             {
                 List<CodeInstruction> instructionList = instructions.ToList();
 
-                for (int i = 218; i <= 223; i++)
+                for (int i = 222; i <= 227; i++)
                 {
                     CodeInstruction instruction = instructionList[i];
                     instruction.opcode = OpCodes.Nop;
