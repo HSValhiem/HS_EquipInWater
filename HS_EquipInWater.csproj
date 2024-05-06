@@ -25,8 +25,9 @@
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.1.0" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
     <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />
+	<PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
@@ -49,8 +50,8 @@
     <Reference Include="assembly_utils">
       <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_utils.dll</HintPath>
     </Reference>
-    <Reference Include="assembly_valheim">
-      <HintPath>..\..\Tools\AssemblyPublicizer\publicized_assemblies\assembly_valheim.dll</HintPath>
+    <Reference Include="assembly_valheim" Publicize="true">
+      <HintPath>..\..\Valheim\valheim_Data\Managed\assembly_valheim.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>..\..\Valheim\BepInEx\core\BepInEx.dll</HintPath>
@@ -65,7 +66,7 @@
       <HintPath>..\..\Valheim\unstripped_corlib\UnityEngine.AnimationModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Tools\AssemblyPublicizer\publicized_assemblies\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\Valheim\unstripped_corlib\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\Valheim\unstripped_corlib\UnityEngine.PhysicsModule.dll</HintPath>
@@ -75,7 +76,7 @@
     </Reference>
   </ItemGroup>
 	<Target Name="MyCustomBuildTask" AfterTargets="ILRepacker">
-		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y " />
-		<Exec Condition="'$(Configuration)' != 'Release'" Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Valheim_Dev\Valheim_Debug\BepInEx\plugins&quot; /Y " />
+		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\SteamLibrary\steamapps\common\Valheim\BepInEx\plugins&quot; /Y " />
+		<Exec Condition="'$(Configuration)' != 'Release'" Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\SteamLibrary\steamapps\common\Valheim\BepInEx\plugins&quot; /Y " />
 	</Target>
 </Project>
