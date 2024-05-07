@@ -7,17 +7,16 @@ using ServerSync;
 using System;
 using System.Reflection.Emit;
 using BepInEx.Logging;
+using HS;
 
 namespace HS_EquipInWater;
 
-[BepInPlugin(ModGUID, ModName, ModVersion)]
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class HS_EquipInWater : BaseUnityPlugin
 {
-    private const string ModName = "HS_EquipInWater";
-    private const string ModVersion = "0.1.7";
-    private const string ModGUID = "hs_equipinwater";
+    private static readonly ConfigSync configSync = new(MyPluginInfo.PLUGIN_GUID) { DisplayName = MyPluginInfo.PLUGIN_NAME, CurrentVersion = MyPluginInfo.PLUGIN_VERSION, MinimumRequiredVersion = "0.1.6" };
 
-    private static readonly ConfigSync configSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = "0.1.6" };
+    public static readonly ManualLogSource HS_Logger = BepInEx.Logging.Logger.CreateLogSource(MyPluginInfo.PLUGIN_NAME);
 
     private static ConfigEntry<Toggle> serverConfigLocked = null!;
     private static ConfigEntry<bool> modEnabled = null!;
@@ -27,6 +26,7 @@ public class HS_EquipInWater : BaseUnityPlugin
 
     private static List<string> itemBlacklistStrings = [];
     private static List<string> itemWhitelistStrings = [];
+
     #region Config Boilerplate
     private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description, bool synchronizedSetting = true)
     {
@@ -55,10 +55,11 @@ public class HS_EquipInWater : BaseUnityPlugin
 
     #endregion
 
-    public static readonly ManualLogSource HS_Logger = BepInEx.Logging.Logger.CreateLogSource(ModName);
-
     private void Awake()
     {
+        // Check if Plugin was Built for Current Version of Valheim
+        if (!VersionChecker.Check(HS_Logger, Info, true, Config)) return;
+
         serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On, "If on, the configuration is locked and can be changed by server admins only.");
         configSync.AddLockingConfigEntry(serverConfigLocked);
         modEnabled = config("1 - General", "Mod Enabled", true, "");
@@ -73,7 +74,7 @@ public class HS_EquipInWater : BaseUnityPlugin
         itemWhitelistStrings = [.. itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)];
 
 
-        Harmony harmony = new(ModGUID);
+        Harmony harmony = new(MyPluginInfo.PLUGIN_GUID);
 
         harmony.Patch(
             AccessTools.Method(typeof(Player), "Update"),
