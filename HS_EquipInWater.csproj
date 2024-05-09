@@ -1,8 +1,8 @@
-﻿<!-- STUB VERSION 0.0.1-->
+﻿<!-- STUB VERSION 0.0.2-->
 <Project Sdk="Microsoft.NET.Sdk">
 	<!-- Static Config -->
 	<PropertyGroup>
-		<TargetFrameworks>net462</TargetFrameworks>
+		<TargetFrameworks>net472</TargetFrameworks>
 		<LangVersion>preview</LangVersion>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -16,7 +16,7 @@
 		<!-- Define BepInEx Plugin Name -->
 		<Product>$(MSBuildProjectName)</Product>
 		<!-- Define BepInEx Plugin Version -->
-		<Version>0.1.8</Version>
+		<Version>0.1.9</Version>
 		<!-- Define Plugin Folder Name with Leading and Trailing \ I.E \$(Authors).$(Product)\, Leave Blank to put Plugin in Root of Plugins Folder-->
 		<PluginFolderName></PluginFolderName>
 		<!-- Define Valheim Location, References and Plugins Directory Paths -->
@@ -91,6 +91,9 @@
 	<ItemGroup>
 		<Reference Include="ServerSync">
 			<HintPath>$(ValheimReferencesPath)\Blaxxun\ServerSync.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestModule">
+		  <HintPath>..\..\valheim\valheim_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
@@ -248,7 +251,7 @@
 		<Exec Command="xcopy &quot;$(SolutionDir)ThunderStore\icon.png&quot; &quot;$(ThunderStoreTarget)&quot; /Y /I" />
 
 		<!-- Zip Mod -->
-		<Exec Command="del &quot;$(ThunderStoreTarget).zip&quot;" ContinueOnError="true" />
+		<Exec Command="del $(SolutionDir)ThunderStore\*.zip" ContinueOnError="true" />
 		<Exec Command="Tar -a -cf &quot;$(ThunderStoreTarget).zip&quot; -C &quot;$(ThunderStoreTarget)&quot; *.*" />
 		<RemoveDir Directories="$(ThunderStoreTarget)" />
 

@@ -18,10 +18,10 @@ internal static class VersionChecker
     public static bool Check(ManualLogSource logger, PluginInfo info, bool allowWrongVersion = false, ConfigFile? config = null)
     {
         // Check Valheim Version
-        string currentValheimVersion = Version.CurrentVersion.ToString();
+        var currentValheimVersion = Version.CurrentVersion.ToString();
         if (currentValheimVersion != ValheimVersion && !allowWrongVersion)
         {
-            string errorMessage = $"ERROR: This version of {info.Metadata.Name} v{info.Metadata.Version} was built for Valheim {ValheimVersion}," +
+            var errorMessage = $"ERROR: This version of {info.Metadata.Name} v{info.Metadata.Version} was built for Valheim {ValheimVersion}," +
                 $" but you are running {currentValheimVersion}." +
                 $" Please download the correct plugin version or Wait for the Plugin to be Updated if a new Version is not Available";
             logger.LogError(errorMessage);
@@ -55,13 +55,13 @@ internal static class VersionChecker
 
     private static void ErrorLabelDrawer(ConfigEntryBase entry)
     {
-        GUIStyle styleNormal = new GUIStyle(GUI.skin.label)
+        GUIStyle styleNormal = new(GUI.skin.label)
         {
             wordWrap = true,
             stretchWidth = true
         };
 
-        GUIStyle styleError = new GUIStyle(GUI.skin.label)
+        GUIStyle styleError = new(GUI.skin.label)
         {
             stretchWidth = true,
             alignment = TextAnchor.MiddleCenter,
