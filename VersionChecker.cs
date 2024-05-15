@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿//VERSIONCHECKER VERSION 0.0.2
+using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -12,30 +13,37 @@ internal static class VersionChecker
 {
     // GENENERATED AT RUNTIME DO NOT SET MANUALLY
     #region Compiler Generated Values
-    private const string ValheimVersion = "0.218.14";
+    private const string ValheimVersion = "0.218.15";
     #endregion
 
     public static bool Check(ManualLogSource logger, PluginInfo info, bool allowWrongVersion = false, ConfigFile? config = null)
     {
         // Check Valheim Version
         var currentValheimVersion = Version.CurrentVersion.ToString();
-        if (currentValheimVersion != ValheimVersion && !allowWrongVersion)
+        if (currentValheimVersion == ValheimVersion) return true;
+
+        var wrongVersionMessage =
+            $"The current version of {info.Metadata.Name} (v{info.Metadata.Version}) is designed for Valheim version {ValheimVersion}," +
+            $" however, your current Valheim version was {currentValheimVersion}.\n";
+
+        if (!allowWrongVersion)
         {
-            var errorMessage = $"ERROR: This version of {info.Metadata.Name} v{info.Metadata.Version} was built for Valheim {ValheimVersion}," +
-                $" but you are running {currentValheimVersion}." +
-                $" Please download the correct plugin version or Wait for the Plugin to be Updated if a new Version is not Available";
+            var errorMessage =
+                $"ERROR: {wrongVersionMessage}" +
+                "To resolve this issue, please obtain the appropriate plugin version, or alternatively, await an update if one is not currently available.\n" +
+                "Please download the correct plugin version or wait for the plugin to be updated if a new version is not available.";
             logger.LogError(errorMessage);
             Chainloader.DependencyErrors.Add(errorMessage);
             if (config != null) SetConfigAlert(config, errorMessage);
             return false;
         }
-        else if(currentValheimVersion != ValheimVersion && allowWrongVersion)
-        {
-            logger.LogWarning($"Warning: This version of {info.Metadata.Name} v{info.Metadata.Version} was built for Valheim {ValheimVersion}," +
-                $" but you are running {currentValheimVersion}." +
-                $" The plugin author has permitted its use nonetheless. Be aware that unexpected issues may arise.");
-        }
 
+        logger.LogWarning(
+            $"WARNING: {wrongVersionMessage}" +
+            "Although the plugin author has permitted this version to work with an outdated Valheim version," +
+            " it's important to note that unforeseen complications may occur\n" +
+            "Please download the correct plugin version or wait for the plugin to be updated if a new version is not available and any issues arise.");
+        
         return true;
     }
 

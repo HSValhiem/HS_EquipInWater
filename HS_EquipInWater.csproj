@@ -16,14 +16,14 @@
 		<!-- Define BepInEx Plugin Name -->
 		<Product>$(MSBuildProjectName)</Product>
 		<!-- Define BepInEx Plugin Version -->
-		<Version>0.1.9</Version>
+		<Version>1.0.0</Version>
 		<!-- Define Plugin Folder Name with Leading and Trailing \ I.E \$(Authors).$(Product)\, Leave Blank to put Plugin in Root of Plugins Folder-->
 		<PluginFolderName></PluginFolderName>
 		<!-- Define Valheim Location, References and Plugins Directory Paths -->
-		<ValheimDevPath>F:\ValheimDev</ValheimDevPath>
+		<ValheimDevPath>D:\ValheimDev</ValheimDevPath>
 		<ValheimReferencesPath>$(ValheimDevPath)\Libs</ValheimReferencesPath>
-		<ValheimBepInExPluginsPath>D:\SteamLibrary\steamapps\common\Valheim\BepInEx\Plugins</ValheimBepInExPluginsPath>
-		<ValheimEXEPath>D:\SteamLibrary\steamapps\common\Valheim\valheim.exe</ValheimEXEPath>
+		<ValheimBepInExPluginsPath>$(ValheimDevPath)\Valheim\BepInEx\Plugins</ValheimBepInExPluginsPath>
+		<ValheimEXEPath>$(ValheimDevPath)\Valheim\valheim.exe</ValheimEXEPath>
 		<!-- Set True to Start Valheim After Build -->
 		<LaunchValheim>True</LaunchValheim>
 		<LaunchValheimRelease>False</LaunchValheimRelease>
@@ -41,9 +41,6 @@
 		<None Remove="assets\**" />
 		<None Remove="ThunderStore\**" />
 		<None Remove="translations\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Remove="README.md" />
 	</ItemGroup>
 
@@ -85,15 +82,15 @@
 		<Reference Include="UnityEngine.TextRenderingModule">
 			<HintPath>$(ValheimReferencesPath)\unstripped_corlib\UnityEngine.TextRenderingModule.dll</HintPath>
 		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestModule">
+			<HintPath>$(ValheimReferencesPath)\unstripped_corlib\UnityEngine.UnityWebRequestModule.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<!-- Library References -->
 	<ItemGroup>
 		<Reference Include="ServerSync">
 			<HintPath>$(ValheimReferencesPath)\Blaxxun\ServerSync.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.UnityWebRequestModule">
-		  <HintPath>..\..\valheim\valheim_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

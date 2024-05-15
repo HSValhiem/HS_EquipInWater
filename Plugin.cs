@@ -6,8 +6,8 @@ using ServerSync;
 using System;
 using System.Reflection.Emit;
 using BepInEx.Logging;
-using HS;
 using System.Reflection;
+using HS;
 
 namespace HS_EquipInWater;
 
@@ -20,6 +20,7 @@ public class Plugin : BaseUnityPlugin
 
     private static ConfigEntry<Toggle> _serverConfigLocked = null!;
     private static ConfigEntry<bool> _modEnabled = null!;
+    private static ConfigEntry<bool> _overrideVersionCheck = null!;
     private static ConfigEntry<FilterMode> _filterMode = null!;
     private static ConfigEntry<string> _itemBlacklist = null!;
     private static ConfigEntry<string> _itemWhitelist = null!;
@@ -57,12 +58,13 @@ public class Plugin : BaseUnityPlugin
 
     private void Awake()
     {
-        // Check if Plugin was Built for Current Version of Valheim
-        if (!VersionChecker.Check(Logger, Info, true, base.Config)) return;
-
         _serverConfigLocked = Config("1 - General", "Lock Configuration", Toggle.On, "If on, the configuration is locked and can only be changed by server admins.");
         ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
         _modEnabled = Config("1 - General", "Mod Enabled", true, "");
+
+        _overrideVersionCheck = Config("1 - General", "Override Version Check", true,
+            new ConfigDescription("Set to True to override the Valheim version check and allow the mod to start, even if an incorrect Valheim version is detected.", 
+                null, new ConfigurationManagerAttributes { Browsable = false}));
 
         _filterMode = Config("2 - Items Filter", "Filter Mode", FilterMode.Blacklist, "Choose the Method of which to Filter Items used while Swimming");
         _itemBlacklist = Config("2 - Items Filter", "Items Blacklisted in Water", "Torch;Lantern;", new ConfigDescription("List of Prefab names to Blacklist the Player from using while Swimming"));
@@ -73,23 +75,26 @@ public class Plugin : BaseUnityPlugin
         _itemWhitelist.SettingChanged += (_, _) => _itemWhitelistStrings = [.. _itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)];
         _itemWhitelistStrings = [.. _itemWhitelist.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)];
 
+#if DEBUG
+        HarmonyLib.Tools.Logger.ChannelFilter |= HarmonyLib.Tools.Logger.LogChannel.IL;
+#else
+        // Check if Plugin was Built for Current Version of Valheim
+        if (!VersionChecker.Check(Logger, Info, _overrideVersionCheck.Value, base.Config)) return;
+#endif
+
         Harmony harmony = new(MyPluginInfo.PLUGIN_GUID);
-        try
-        {
-            harmony.PatchAll();
-        }
+        try { harmony.PatchAll(); }
         catch (HarmonyException)
         {
-            Logger.LogError("Unable to start due to Harmony Unable to Find Patch Methods, Please Update/Remove Plugin or Report Error to Author, Stopping Valheim Now!");
+            Logger.LogError("ERROR: Startup Failure, Harmony Patch Methods Not Found. Please Update or Remove the Plugin and Notify the Author of the Error. Valheim Shutdown Initiated.");
             Environment.Exit(1);
         }
     }
 
-    // Return true to Put away All Equipment when in water
+    // Return true to Put away configured(Blacklist/Whitelist) Equipment when in water
     public static bool HS_CheckWaterItem(ItemDrop.ItemData? item)
     {
-        if (!_modEnabled.Value)
-            return true;
+        if (!_modEnabled.Value) return true;
 
         if (item == null)
         {
@@ -135,7 +140,7 @@ public class Plugin : BaseUnityPlugin
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
         {
-            // Search Instructions for Call to IsSwimming() and IsOnGround() using the filter.
+            // Search Instructions for Call to IsSwimming() and IsOnGround() using the filter
             var codeMatcher = new CodeMatcher(instructions).MatchStartForward(Matches);
             try
             {
@@ -146,16 +151,16 @@ public class Plugin : BaseUnityPlugin
                         codeMatcher.Advance(1).RemoveInstructions(6);
                         break;
                     case (nameof(Humanoid), nameof(Humanoid.EquipItem)):
-                        // Inject Call to HS_CheckWaterItem() from Humanoid->EquipItem.
+                        // Inject to Call HS_CheckWaterItem() from Humanoid->EquipItem with ItemDrop.ItemData as argument
                         codeMatcher.Advance(6).Insert(new List<CodeInstruction>
                         {
-                            new(OpCodes.Ldarg_1),
+                            new(OpCodes.Ldarg_1), // Stack Var with ItemDrop.ItemData
                             new(OpCodes.Call, typeof(Plugin).GetMethod(nameof(HS_CheckWaterItem))),
-                            new(OpCodes.Brfalse, codeMatcher.InstructionAt(-1).operand)
+                            new(OpCodes.Brfalse, codeMatcher.InstructionAt(-1).operand) // Borrow Index from previous instruction
                         });
                         break;
                     case (nameof(Humanoid), nameof(Humanoid.UpdateEquipment)):
-                        // Inject Call to HS_CheckWaterItem() from Humanoid->UpdateEquipment.
+                        // Inject to Call HS_CheckWaterItem() from Humanoid->UpdateEquipment with Null as argument
                         codeMatcher.Advance(6).Insert(new List<CodeInstruction>
                         {
                             new(OpCodes.Ldnull),
@@ -167,7 +172,7 @@ public class Plugin : BaseUnityPlugin
             }
             catch (ArgumentException)
             {
-                Logger.LogError($"Unable to Start due to IL Transpiler Errors, Please Update/Remove Plugin or Report Error to Author, Stopping Valheim Now!");
+                Logger.LogError("ERROR: Startup Failure, IL Transpiler Errors Detected. Please Update or Remove the Plugin, or Notify the Author of the Issue. Valheim Shutdown Initiated.");
                 Environment.Exit(1);
             }
             return codeMatcher.InstructionEnumeration();
